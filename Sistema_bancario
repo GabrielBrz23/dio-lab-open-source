@@ -1,0 +1,138 @@
+# ==============================
+# MODULO: contas.py
+# ==============================
+class Conta:
+    contador = 1000
+
+    def __init__(self, titular, cpf, tipo="corrente"):
+        self.numero = Conta.contador
+        Conta.contador += 1
+        self.titular = titular
+        self.cpf = cpf
+        self.tipo = tipo
+        self.saldo = 0.0
+        self.transacoes = []
+
+    def mostrar_extrato(self):
+        print(f"\n--- Extrato da Conta {self.numero} ({self.titular}) ---")
+        for t in self.transacoes:
+            print(t)
+        print(f"Saldo atual: R$ {self.saldo:.2f}\n")
+
+
+# ==============================
+# MODULO: transacoes.py
+# ==============================
+def depositar(conta, valor):
+    if valor <= 0:
+        print("Valor inválido para depósito.")
+        return
+    conta.saldo += valor
+    conta.transacoes.append(f"Depósito: R$ {valor:.2f}")
+    print(f"Depósito de R$ {valor:.2f} realizado com sucesso!")
+
+def sacar(conta, valor):
+    if valor <= 0:
+        print("Valor inválido para saque.")
+        return
+    if valor > conta.saldo:
+        print("Saldo insuficiente.")
+        return
+    conta.saldo -= valor
+    conta.transacoes.append(f"Saque: R$ {valor:.2f}")
+    print(f"Saque de R$ {valor:.2f} realizado com sucesso!")
+
+def transferir(conta_origem, conta_destino, valor):
+    if valor <= 0:
+        print("Valor inválido para transferência.")
+        return
+    if valor > conta_origem.saldo:
+        print("Saldo insuficiente na conta de origem.")
+        return
+    conta_origem.saldo -= valor
+    conta_destino.saldo += valor
+    conta_origem.transacoes.append(f"Transferência para {conta_destino.numero}: R$ {valor:.2f}")
+    conta_destino.transacoes.append(f"Transferência recebida de {conta_origem.numero}: R$ {valor:.2f}")
+    print(f"Transferência de R$ {valor:.2f} realizada com sucesso!")
+
+
+# ==============================
+# MODULO: seguranca.py
+# ==============================
+import getpass
+
+def autenticar(conta, senha_correta):
+    for tentativa in range(3):
+        senha = getpass.getpass("Digite sua senha: ")
+        if senha == senha_correta:
+            print("Autenticação bem-sucedida!")
+            return True
+        else:
+            print("Senha incorreta.")
+    print("Conta bloqueada após 3 tentativas falhas.")
+    return False
+
+
+# ==============================
+# MODULO: main.py
+# ==============================
+def main():
+    contas = {}
+    senhas = {}
+
+    while True:
+        print("\n=== Sistema Bancário ===")
+        print("1. Criar conta")
+        print("2. Depositar")
+        print("3. Sacar")
+        print("4. Transferir")
+        print("5. Mostrar extrato")
+        print("6. Sair")
+
+        opcao = input("Escolha uma opção: ")
+
+        if opcao == "1":
+            titular = input("Nome do titular: ")
+            cpf = input("CPF: ")
+            senha = input("Defina uma senha: ")
+            conta = Conta(titular, cpf)
+            contas[conta.numero] = conta
+            senhas[conta.numero] = senha
+            print(f"Conta criada com sucesso! Número da conta: {conta.numero}")
+
+        elif opcao in ["2", "3", "4", "5"]:
+            try:
+                numero = int(input("Digite o número da conta: "))
+                conta = contas[numero]
+                if not autenticar(conta, senhas[numero]):
+                    continue
+            except:
+                print("Conta não encontrada.")
+                continue
+
+            if opcao == "2":
+                valor = float(input("Valor para depósito: R$ "))
+                depositar(conta, valor)
+            elif opcao == "3":
+                valor = float(input("Valor para saque: R$ "))
+                sacar(conta, valor)
+            elif opcao == "4":
+                try:
+                    numero_destino = int(input("Conta destino: "))
+                    conta_destino = contas[numero_destino]
+                except:
+                    print("Conta destino não encontrada.")
+                    continue
+                valor = float(input("Valor para transferência: R$ "))
+                transferir(conta, conta_destino, valor)
+            elif opcao == "5":
+                conta.mostrar_extrato()
+
+        elif opcao == "6":
+            print("Saindo do sistema. Até mais!")
+            break
+        else:
+            print("Opção inválida.")
+
+if __name__ == "__main__":
+    main()
